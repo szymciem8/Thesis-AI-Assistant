@@ -3,3 +3,6 @@ openai==0.28.1
 langchain
 tiktoken
 python-dotenv
+pypdf
+faiss-cpu
+chromadb
