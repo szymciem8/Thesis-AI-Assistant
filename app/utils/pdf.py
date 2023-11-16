@@ -67,7 +67,7 @@ class ScientificPDF(ScientificPDFBase):
         Create ChromaDB knowledge base
         """
         text_splitter = CharacterTextSplitter(
-            separator="\n\n", chunk_size=1000, chunk_overlap=200, length_function=len
+            separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
         )
         chunks = text_splitter.split_text(self.text)
         embeddings = OpenAIEmbeddings()

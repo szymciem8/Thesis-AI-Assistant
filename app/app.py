@@ -3,7 +3,7 @@ import streamlit as st
 
 from dotenv import load_dotenv
 from settings import AI_LLM_MODELS
-from utils.general import setup_env, load_openai_model
+from utils.general import setup_env, load_openai_model, check_openai_api_key
 from utils.ui import intro, single_article, multiple_articles
 
 # Page title    
@@ -12,8 +12,10 @@ st.title("🦜🔗 Thesis AI Assistant")
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
-if not openai_api_key:
+if not check_openai_api_key(openai_api_key):
     openai_api_key = st.text_input('Open AI API key')
+    if not check_openai_api_key(openai_api_key):
+        st.error('Invalid key')
     os.environ["OPENAI_API_KEY"] = openai_api_key
 else:
     setup_env()

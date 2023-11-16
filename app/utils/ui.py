@@ -30,7 +30,7 @@ def single_article(model):
     url_str = st.text_input("Article URL to PDF")
     pdf = None
     if url(url_str) and model:
-        pdf = ScientificPDF(url, model)
+        pdf = ScientificPDF(url_str, model)
 
     chat_tab, basics_tab, pdf_viewer_tab, highlights_tab, listen_tab = st.tabs(["📈 Chat", "📝 Basics", "🔎 PDF Viewer", "💡 Highlights", "🗣️ Listen"])
 
@@ -69,7 +69,7 @@ def multiple_articles(model):
 
 def show_multiple_pdfs_chat(multiple_pdfs):
     if "multiple_pdf_messages" not in st.session_state.keys():
-        st.session_state.multiple_pdf_messages = [{"role": "assistant", "content": "I'm HugChat, How may I help you?"}]
+        st.session_state.multiple_pdf_messages = [{"role": "assistant", "content": "I'm your Thesis AI Assistant, How may I help you?"}]
     prompt = st.text_input("Ask a question about your articles:", disabled=not multiple_pdfs)
     if prompt:
         st.session_state.multiple_pdf_messages.append({"role": "user", "content": prompt})
@@ -84,7 +84,7 @@ def show_multiple_pdfs_chat(multiple_pdfs):
 
 def show_single_pdf_chat(pdf):
     if "single_pdf_messages" not in st.session_state.keys():
-        st.session_state.single_pdf_messages = [{"role": "assistant", "content": "I'm HugChat, How may I help you?"}]
+        st.session_state.single_pdf_messages = [{"role": "assistant", "content": "I'm Thesis AI Assistant, How may I help you?"}]
     prompt = st.text_input("Ask a question about your article:", disabled=not pdf)
     if prompt:
         st.session_state.single_pdf_messages.append({"role": "user", "content": prompt})
