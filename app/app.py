@@ -13,11 +13,12 @@ st.title("🦜🔗 Thesis AI Assistant")
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if not check_openai_api_key(openai_api_key):
-    openai_api_key = st.text_input('Open AI API key')
-    if not check_openai_api_key(openai_api_key):
+    openai_api_key = st.text_input('Open AI API key', type='password')
+    if not check_openai_api_key(openai_api_key) and openai_api_key != '':
         st.error('Invalid key')
     os.environ["OPENAI_API_KEY"] = openai_api_key
-else:
+
+if check_openai_api_key(openai_api_key):
     setup_env()
     model_name = st.sidebar.selectbox(
         "Which LLM model would you like to use?",
