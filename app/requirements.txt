@@ -6,3 +6,4 @@ python-dotenv
 pypdf
 faiss-cpu
 chromadb
+elasticsearch==8.9.0
