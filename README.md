@@ -7,4 +7,4 @@ docker-compose up
 ``
 
 
-![Single article chat](/images/single_article_chat.png)
+![Single article chat](/images/single_article_chat_screen.png)
