@@ -24,9 +24,8 @@ def setup_env():
 
 def check_openai_api_key(api_key):
     openai.api_key = api_key
-    # try:
-    #     openai.Model.list()
-    # except:
-    #     return False
-    # else:
+    try:
+        model = openai.OpenAI()
+    except:
+        return False
     return True
