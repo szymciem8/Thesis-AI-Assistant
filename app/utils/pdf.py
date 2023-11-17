@@ -5,28 +5,29 @@ import sys
 
 from pathlib import Path
 
-from langchain.document_loaders import PyPDFLoader
-from langchain.chains import AnalyzeDocumentChain
-from langchain.chains.summarize import load_summarize_chain
-from langchain.vectorstores import FAISS, Chroma
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.callbacks import get_openai_callback
 from langchain.chains import RetrievalQA, LLMChain
-from langchain.prompts import PromptTemplate
+from langchain.chains import AnalyzeDocumentChain
+from langchain.chains.summarize import load_summarize_chain
+from langchain.document_loaders import PyPDFLoader
+from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.output_parsers import CommaSeparatedListOutputParser
+from langchain.prompts import PromptTemplate
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain.vectorstores.elasticsearch import ElasticsearchStore
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from utils.custom_parsers import SemicolonSeparatedListOutputParser
 from utils.elasticsearch import get_elasticserach_store
-
-from settings import ES_ARTICLES_INDEX
+from settings import SINGLE_ARTICLE_INDEX, ARTICLES_INDEX
 
 
 class ScientificPDFBase:
     def __init__(self, model):
         self.model = model
+        self._knowledge_base = None
 
     @property
     def _retriever(self):
@@ -35,6 +36,21 @@ class ScientificPDFBase:
     @st.cache_resource
     def _load_pdf(_self, url):
         return PyPDFLoader(url)
+    
+    def _get_or_create_knowledge_base(self, index_name=None):
+        if not self._knowledge_base:
+            try:
+                self._knowledge_base = get_elasticserach_store(index_name=index_name)
+            except:
+                self._knowledge_base = Chroma(collection_name=index_name, embedding_function=OpenAIEmbeddings())
+        return self._knowledge_base
+
+    def vector_db_type(self):
+        if type(self._knowledge_base) is Chroma:
+            return 'Chroma'
+        if type(self._knowledge_base) is ElasticsearchStore:
+            return 'Elsticsearch'
+        return None
 
     def ask(self, query):
         """
@@ -53,14 +69,12 @@ class ScientificPDF(ScientificPDFBase):
         self.pdf = self._load_pdf(url)
         self.pages = self.pdf.load_and_split()
         self.text = self._extract_text()
-        self.knowledge_base = self._create_knowledge_base()
+        self._knowledge_base = self._get_or_create_knowledge_base(index_name=SINGLE_ARTICLE_INDEX)
+        self._create_knowledge_base()
 
     @property
     def _retriever(self):
-        """
-        Get retriever from ChromaDB
-        """
-        return self.knowledge_base.as_retriever()
+        return self._knowledge_base.as_retriever()
 
     def _create_knowledge_base(self):
         """
@@ -70,9 +84,7 @@ class ScientificPDF(ScientificPDFBase):
             separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
         )
         chunks = text_splitter.split_text(self.text)
-        embeddings = OpenAIEmbeddings()
-        knowledge_base = Chroma.from_texts(chunks, embeddings)
-        return knowledge_base
+        self._knowledge_base.add_texts(chunks)
 
     def _extract_text(self):
         """
@@ -96,7 +108,6 @@ class ScientificPDF(ScientificPDFBase):
         """
         Cast PDF file to base64
         """
-
         try:
             response = requests.get(self.url_path, stream=True)
             pdf_base64 = base64.b64encode(response.content).decode("utf-8")
@@ -177,14 +188,14 @@ class ScientificPDF(ScientificPDFBase):
 class MutipleScientificPDFs(ScientificPDFBase):
     def __init__(self, model):
         super().__init__(model)
+        self._knowledge_base = self._get_or_create_knowledge_base(ARTICLES_INDEX)
 
     @property
     def _retriever(self):
         """
         Get retriever from Elasticsearch retriever
         """
-        es = get_elasticserach_store(index_name=ES_ARTICLES_INDEX)
-        retriever = es.as_retriever()
+        retriever = self._get_or_create_knowledge_base(ARTICLES_INDEX).as_retriever()
         return retriever
 
     def _split_list_str(self, string):
@@ -204,9 +215,9 @@ class MutipleScientificPDFs(ScientificPDFBase):
         Upload pdfs to Elasticsearch
         """
         self.url_list = self._split_list_str(url_list)
-        self._update_elasticsearch()
+        self._update_vec_db()
 
-    def _update_elasticsearch(self):
+    def _update_vec_db(self):
         """
         Create ElasticSearch knowledge base
         """
@@ -215,5 +226,4 @@ class MutipleScientificPDFs(ScientificPDFBase):
             separator="\n", chunk_size=500, chunk_overlap=100, length_function=len
         )
         chunks = text_splitter.split_text(text)
-        es = get_elasticserach_store(index_name=ES_ARTICLES_INDEX)
-        es.add_texts(chunks)
+        self._knowledge_base.add_texts(chunks)

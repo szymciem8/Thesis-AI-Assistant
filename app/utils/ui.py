@@ -15,7 +15,7 @@ def intro():
 
         **👈 Select from the dropdown on the left** to see what AI Assitant can do!
 
-        ### Want to learn more Streamlit?
+        ### Want to learn more about Streamlit?
 
         - Check out [streamlit.io](https://streamlit.io)
         - Jump into our [documentation](https://docs.streamlit.io)
@@ -25,7 +25,6 @@ def intro():
     )
 
 
-# if pdf:
 def single_article(model):
     url_str = st.text_input("Article URL to PDF")
     pdf = None
@@ -55,15 +54,12 @@ def multiple_articles(model):
     with st.form(key="Upload documents"):
         url_list = st.text_input("Paste list of URLs to scientific articles (urls must be comma separated)")
         multiple_pdfs = MutipleScientificPDFs(model)
-        col1, col2, _ = st.columns(3)
-        with col1:
-            submit_docs = col1.form_submit_button("Submit to Elasticsearch")
-        with col2:
-            clear_vec_db = col2.form_submit_button("Clear Elasticsearch")
-
+        db_type = multiple_pdfs.vector_db_type()
+        if db_type == "Chroma":
+            st.info("Elasticsearch is not available. You're using Chroma.")
+        submit_docs = st.form_submit_button("Submit documents")
         if submit_docs:
             multiple_pdfs.upload_pdfs(url_list)
-
     show_multiple_pdfs_chat(multiple_pdfs)
 
 
