@@ -15,4 +15,5 @@ AI_LLM_MODELS = AI_MODEL_OPTIONS + AI_CHAT_MODELS
 
 # Elasticsearch
 ELASTICSEARCH_HOST = 'http://elasticsearch:9200'
-ES_ARTICLES_INDEX = 'articles'
+ARTICLES_INDEX = 'articles'
+SINGLE_ARTICLE_INDEX = 'single_article'
