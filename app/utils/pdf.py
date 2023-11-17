@@ -11,11 +11,13 @@ from langchain.chains import AnalyzeDocumentChain
 from langchain.chains.summarize import load_summarize_chain
 from langchain.document_loaders import PyPDFLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
+# from langchain.llms.openai import OpenAI
 from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.vectorstores.elasticsearch import ElasticsearchStore
+import openai
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -184,6 +186,38 @@ class ScientificPDF(ScientificPDFBase):
         sections = self._get_highlights(query)
         return sections
 
+    def text_2_speech(self, max_n_words, voice="alloy", filename='output.mp3'):
+        """
+        Generate choosen number of keywords based on the article.
+        """
+        template = """
+        Based on the full text generate a simplified version that does not
+        exceed {max_n_words} words. It should be well written and consists of as much
+        important information as possible. Keep in mind that this text will be
+        later converted to speech. \n
+
+        Text: \n
+        {text}
+        """
+        prompt = PromptTemplate(
+            template=template,
+            input_variables=["text", "max_n_words"]
+        )
+        chain = LLMChain(llm=self.model, prompt=prompt)
+        output = chain.run(text=self.text, max_n_words=max_n_words)
+
+        audio_generated = True
+        try:
+            client = openai.OpenAI()
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice=voice,
+                input=output,
+            )
+            response.stream_to_file(filename)
+        except:
+            audio_generated = False
+        return audio_generated, output
 
 class MutipleScientificPDFs(ScientificPDFBase):
     def __init__(self, model):

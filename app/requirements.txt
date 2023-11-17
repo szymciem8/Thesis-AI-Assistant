@@ -1,5 +1,5 @@
 langchain==0.0.336
-openai==0.28.1
+openai
 python-dotenv==1.0.0
 Requests==2.31.0
 streamlit==1.28.2

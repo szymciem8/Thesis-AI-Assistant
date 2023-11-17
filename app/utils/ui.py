@@ -46,11 +46,11 @@ def single_article(model):
         show_highlights(pdf)
 
     with listen_tab:
-        st.info("Coming soon!")
+        show_listen(pdf)
+        # st.info("Coming soon!")
 
 
 def multiple_articles(model):
-    st.header("Upload documents", divider="rainbow")
     with st.form(key="Upload documents"):
         url_list = st.text_input("Paste list of URLs to scientific articles (urls must be comma separated)")
         multiple_pdfs = MutipleScientificPDFs(model)
@@ -115,7 +115,6 @@ def show_basics(pdf):
 
 
 def show_pdf_viewer(pdf):
-    st.header("PDF Viewer", divider="rainbow")
     if pdf:
         pdf.display_pdf()
     else:
@@ -123,9 +122,31 @@ def show_pdf_viewer(pdf):
 
 
 def show_highlights(pdf):
-    st.header("Highlights", divider="rainbow")
     with st.form(key="Highlights"):
         query = st.text_input("Write which part of the text you want to highlight", disabled=not pdf)
         submitted = st.form_submit_button("Generate highlights")
         if submitted and query:
             st.info(pdf.show_highlighted_sections(query))
+
+
+def show_listen(pdf):
+    generated = False
+    with st.form(key="Listen"):
+        n_of_words = st.slider(
+            "How long should your speech be? This is a maximum possible value.", 200, 1000, 250, step=10
+        )
+        lector_name = st.selectbox(
+            "Choose your lector",
+            ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+            index=0,
+            placeholder="Select voice...",
+            key="sidebar_lector",
+        )
+        submitted = st.form_submit_button("Generate speech")
+        if submitted:
+            generated, text = pdf.text_2_speech(n_of_words, voice=lector_name)
+            st.info(text)
+            if generated:
+                audio_file = open('output.mp3', 'rb')
+                audio_bytes = audio_file.read()
+                st.audio(audio_bytes, format='audio/mp3')
