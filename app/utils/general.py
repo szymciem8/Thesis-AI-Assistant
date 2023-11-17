@@ -13,7 +13,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from settings import AI_CHAT_MODELS
 
 
-@st.cache_resource
 def load_openai_model(model_name):
     if model_name in AI_CHAT_MODELS:
         return ChatOpenAI(model=model_name)
